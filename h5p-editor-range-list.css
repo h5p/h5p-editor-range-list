@@ -1,0 +1,12 @@
+.h5p-editor-range-list thead th.h5peditor-type-number {
+  white-space: nowrap;
+}
+.h5p-editor-range-list thead th.h5peditor-dash {
+  width: 6px;
+}
+.h5p-editor-range-list tbody td.h5peditor-dash {
+  line-height: 37px;
+}
+.h5p-editor-range-list .h5peditor-input-text {
+  line-height: 38px;
+}
