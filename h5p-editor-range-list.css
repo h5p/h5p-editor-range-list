@@ -1,5 +1,6 @@
 .h5p-editor-range-list thead th.h5peditor-type-number {
   white-space: nowrap;
+  width: 65px;
 }
 .h5p-editor-range-list thead th.h5peditor-dash {
   width: 6px;
@@ -9,4 +10,24 @@
 }
 .h5p-editor-range-list .h5peditor-input-text {
   line-height: 38px;
+  height: 38px;
+  text-align: center;
+}
+.h5p-editor-range-list .number input {
+  text-align: center;
+  width: 65px;
+}
+.h5p-editor-range-list thead th.h5peditor-remove-header {
+  position: relative;
+}
+.h5peditor-range-distribute {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  white-space: nowrap;
+  font-weight: normal;
+  font-size: 14px;
+  padding: 0 12px;
+  line-height: 30px;
+  height: 31px;
 }
