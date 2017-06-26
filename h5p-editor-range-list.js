@@ -256,12 +256,14 @@ H5PEditor.RangeList = (function ($, TableList) {
         // Distribute percentages equally
         var rowRange = (end - start) / tbody.children.length;
 
-        // Go though a
+        // Go though all the rows
         for (var i = 0; i < tbody.children.length; i++) {
           var row = tbody.children[i];
           var from = start + (rowRange * i);
           setValue(getFirst('input', row), Math.floor(from) + (i === 0 ? 0 : 1));
-          setValue(getSecond('input', row), Math.floor(from + rowRange));
+          secondInput = getSecond('input', row);
+          setValue(secondInput, Math.floor(from + rowRange));
+          secondInput.dispatchEvent(new Event('keyup')); // Workaround to remove error messages
         }
       };
     };
