@@ -19,6 +19,8 @@ H5PEditor.RangeList = (function ($, TableList) {
       initialized = true;
     });
 
+    var distributeButton;
+
     // Customize header
     self.once('headersadd', function (event) {
       var headRow = event.data.element;
@@ -31,12 +33,13 @@ H5PEditor.RangeList = (function ($, TableList) {
       headRow.children[0].classList.add('h5peditor-required');
 
       // Add button to equally distribute ranges
-      headRow.children[4].appendChild(createButtonWithConfirm(
+      distributeButton = createButtonWithConfirm(
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonLabel'),
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonWarning'),
         'importance-low h5peditor-range-distribute',
         distributeEquallyHandler(fields[0].min, fields[1].max, headRow.parentElement.nextElementSibling)
-      ));
+      );
+      headRow.children[4].appendChild(distributeButton);
     });
 
     // Customize rows as they're added
@@ -87,8 +90,8 @@ H5PEditor.RangeList = (function ($, TableList) {
         }
       });
 
-      // Show the preivous field's second input when adding a new row
       if (row.previousElementSibling) {
+        // Show the preivous field's second input when adding a new row
         getSecond('.h5peditor-input-text', row.previousElementSibling).style.display = 'none';
         var prevToInput = getSecond('input', row.previousElementSibling);
         prevToInput.style.display = 'initial';
@@ -97,6 +100,13 @@ H5PEditor.RangeList = (function ($, TableList) {
           // User action, use no value
           setValue(prevToInput, '');
         }
+
+        // More than one row, enable buttons
+        toggleButtons(true, row.previousElementSibling);
+      }
+      else {
+        // This is the first row, disable buttons
+        toggleButtons(false, row);
       }
     });
 
@@ -112,11 +122,20 @@ H5PEditor.RangeList = (function ($, TableList) {
           var prevToInput = getSecond('input', row.previousElementSibling);
           prevToInput.style.display = 'none';
           setValue(prevToInput, fields[1].max);
+
+          if (!row.previousElementSibling.previousElementSibling) {
+            // Only one row left, disable buttons
+            toggleButtons(false, row.previousElementSibling);
+          }
         }
       }
       else if (!row.previousElementSibling) {
         // This was the first row
         setValue(getFirst('input', row.nextElementSibling), fields[0].min);
+        if (!row.nextElementSibling.nextElementSibling) {
+          // Only one row left, disable buttons
+          toggleButtons(false, row.nextElementSibling);
+        }
       }
       else {
         // Set first input of next row to match the second input of previous row.
@@ -216,14 +235,17 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       // Create and return button element
       return H5PEditor.createButton(classname, label, function () {
-        // The button has been clicked, activate confirmation dialog
-        confirmDialog.show(this.getBoundingClientRect().top);
+        if (this.getAttribute('aria-disabled') !== 'true') {
+          // The button has been clicked, activate confirmation dialog
+          confirmDialog.show(this.getBoundingClientRect().top);
+        }
       }, true)[0];
     };
 
     /**
      * Generate an event handler for distributing ranges equally.
      *
+     * @private
      * @param {number} start The minimum value
      * @param {number} end The maximum value
      * @param {HTMLTableSectionElement} tbody Table section containing the rows
@@ -242,6 +264,47 @@ H5PEditor.RangeList = (function ($, TableList) {
           setValue(getSecond('input', row), Math.floor(from + rowRange));
         }
       };
+    };
+
+    /**
+     * Toggle buttons disabled / enabled
+     *
+     * @private
+     * @param {boolean} state true to enable buttons, false to disable
+     * @param {HTMLTableRowElement} row to look in
+     */
+    var toggleButtons = function (state, row) {
+      var removeButton = row.children[row.children.length - 1].children[0];
+      if (state) {
+        enableButton(distributeButton);
+        enableButton(removeButton);
+      }
+      else {
+        disableButton(distributeButton);
+        disableButton(removeButton);
+      }
+    };
+
+    /**
+     * Disables the given button
+     *
+     * @private
+     * @param {HTMLElement} button to look in
+     */
+    var disableButton = function (button) {
+      button.setAttribute('aria-disabled', 'true');
+      button.removeAttribute('tabindex');
+    };
+
+    /**
+     * Enables the given button
+     *
+     * @private
+     * @param {HTMLElement} button to look in
+     */
+    var enableButton = function (button) {
+      button.removeAttribute('aria-disabled');
+      button.setAttribute('tabindex', '0');
     };
   }
 

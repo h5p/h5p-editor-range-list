@@ -31,3 +31,12 @@
   line-height: 30px;
   height: 31px;
 }
+.h5peditor-range-distribute[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.5;
+}
+.h5peditor-button-textual.h5peditor-range-distribute[aria-disabled="true"]:hover {
+  background: #f5f5f5;
+  background-image: linear-gradient(#eeeeef 50%, transparent 50%, transparent);
+  border-color: #d0d0d1;
+}
