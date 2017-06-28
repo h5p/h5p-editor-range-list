@@ -31,15 +31,24 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       // Mark score range label as required
       headRow.children[0].classList.add('h5peditor-required');
+    });
 
-      // Add button to equally distribute ranges
+    // Customize footer - add distribution button
+    self.once('footeradd', function (event) {
+      var footerCell = event.data.footerCell;
+      var fields = event.data.fields;
+      var tbody = event.data.tbody;
+
+      // Add button to evenly distribute ranges
       distributeButton = createButtonWithConfirm(
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonLabel'),
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonWarning'),
-        'importance-low h5peditor-range-distribute',
-        distributeEquallyHandler(fields[0].min, fields[1].max, headRow.parentElement.nextElementSibling)
+        'h5peditor-range-distribute',
+        distributeEvenlyHandler(fields[0].min, fields[1].max, tbody)
       );
-      headRow.children[4].appendChild(distributeButton);
+
+      footerCell.colSpan += 2;
+      footerCell.appendChild(distributeButton);
     });
 
     // Customize rows as they're added
@@ -251,9 +260,9 @@ H5PEditor.RangeList = (function ($, TableList) {
      * @param {HTMLTableSectionElement} tbody Table section containing the rows
      * @return {function} Event handler
      */
-    var distributeEquallyHandler = function (start, end, tbody) {
+    var distributeEvenlyHandler = function (start, end, tbody) {
       return function () {
-        // Distribute percentages equally
+        // Distribute percentages evenly
         var rowRange = (end - start) / tbody.children.length;
 
         // Go though all the rows
@@ -320,7 +329,7 @@ H5PEditor.RangeList = (function ($, TableList) {
 // Add translations
 H5PEditor.language['H5PEditor.RangeList'] = {
   'libraryStrings': {
-    'distributeButtonLabel': 'Distribute Percentages Equally',
+    'distributeButtonLabel': 'Distribute Evenly',
     'distributeButtonWarning': 'Values will be changed for all of the ranges. Do you wish to proceed?'
   }
 };
