@@ -47,3 +47,17 @@
   border: 1px solid #8fb3d3;
   background: #fff;
 }
+.h5p-editor-table-list tbody .h5p-error-range-overlap td {
+  border-color: #da0001;
+}
+
+.h5p-editor-range-list-message-area {
+  display: none;
+  background: #f4ecec;
+  border-left: 2px solid #ad5b52;
+  padding: 1em;
+  margin-bottom: 0.5em;
+}
+.h5p-editor-range-list-message-area.problem-found {
+  display: block;
+}

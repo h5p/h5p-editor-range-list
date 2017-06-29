@@ -17,6 +17,7 @@ H5PEditor.RangeList = (function ($, TableList) {
     var initialized = false;
     list.once('changeWidget', function () {
       initialized = true;
+      validateSequence();
     });
 
     var distributeButton;
@@ -49,6 +50,11 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       footerCell.colSpan += 2;
       footerCell.appendChild(distributeButton);
+
+      // Create message area
+      self.messageArea = document.createElement('div');
+      self.messageArea.className = 'h5p-editor-range-list-message-area';
+      footerCell.insertBefore(self.messageArea, footerCell.children[0]);
     });
 
     // Customize rows as they're added
@@ -81,7 +87,7 @@ H5PEditor.RangeList = (function ($, TableList) {
       });
 
       // Update next fromInput when this toInput changes
-      toInput.addEventListener('change', function () {
+      toInput.addEventListener('blur', function () {
         if (toInput.value === '') {
           // No value set
           setValue(getFirst('input', row.nextElementSibling), '');
@@ -97,6 +103,8 @@ H5PEditor.RangeList = (function ($, TableList) {
           }
           setValue(getFirst('input', row.nextElementSibling), value);
         }
+
+        validateSequence();
       });
 
       if (row.previousElementSibling) {
@@ -108,6 +116,10 @@ H5PEditor.RangeList = (function ($, TableList) {
         if (initialized) {
           // User action, use no value
           setValue(prevToInput, '');
+          // Hack:
+          // Since setting the value to empty will not validate (field is mandatory),
+          // it will initially produce an error message. Removes this error-message here:
+          prevToInput.parentNode.querySelector('.h5p-errors').innerHTML = '';
         }
 
         // More than one row, enable buttons
@@ -117,10 +129,14 @@ H5PEditor.RangeList = (function ($, TableList) {
         // This is the first row, disable buttons
         toggleButtons(false, row);
       }
+
+      if (initialized) {
+        validateSequence();
+      };
     });
 
     // Handle row being removed from the table
-    self.on('rowremove', function (event) {
+    self.on('beforerowremove', function (event) {
       var row = event.data.element;
       var fields = event.data.fields;
 
@@ -150,6 +166,11 @@ H5PEditor.RangeList = (function ($, TableList) {
         // Set first input of next row to match the second input of previous row.
         setValue(getFirst('input', row.nextElementSibling), getSecond('input', row.previousElementSibling).value);
       }
+    });
+
+    // When row is removed - let's look for overlapping sequences
+    self.on('afterrowremove', function (event) {
+      validateSequence();
     });
 
     /**
@@ -223,6 +244,28 @@ H5PEditor.RangeList = (function ($, TableList) {
       input.value = value;
       input.dispatchEvent(new Event('change'));
     };
+
+    /**
+     * Identify overlapping ranges, and set a warning message if so
+     */
+    var validateSequence = function () {
+      var values = list.getValue();
+      var higest = 0;
+      var problemFound = false;
+      for (var i = 0; i < values.length; i++) {
+        if (values[i].to <= higest) {
+          problemFound = true;
+          self.rows[i].classList.add('h5p-error-range-overlap');
+        }
+        else {
+          self.rows[i].classList.remove('h5p-error-range-overlap');
+        }
+        higest = values[i].to;
+      }
+      // Display a message
+      self.messageArea.innerText = problemFound ? H5PEditor.t('H5PEditor.RangeList', 'rangeOutOfSequenceWarning') : '';
+      self.messageArea.classList[problemFound ? 'add' : 'remove']('problem-found');
+    }
 
     /**
      * Create button which requires confirmation to be used.
@@ -330,6 +373,7 @@ H5PEditor.RangeList = (function ($, TableList) {
 H5PEditor.language['H5PEditor.RangeList'] = {
   'libraryStrings': {
     'distributeButtonLabel': 'Distribute Evenly',
-    'distributeButtonWarning': 'Values will be changed for all of the ranges. Do you wish to proceed?'
+    'distributeButtonWarning': 'Values will be changed for all of the ranges. Do you wish to proceed?',
+    'rangeOutOfSequenceWarning': 'The score ranges are out of sequence'
   }
 };
