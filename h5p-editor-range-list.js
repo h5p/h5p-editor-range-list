@@ -262,7 +262,7 @@ H5PEditor.RangeList = (function ($, TableList) {
      * Identify overlapping ranges, and set a warning message if so
      */
     var validateSequence = function () {
-      var higest = 0;
+      var higest = -1;
       var problemFound = false;
       var tbody = self.getBody();
       for (var i = 0; i < tbody.children.length; i++) {
