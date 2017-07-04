@@ -109,6 +109,7 @@ H5PEditor.RangeList = (function ($, TableList) {
         var value = parseInt(toInput.value);
         if (row.nextElementSibling && !isNaN(value)) {
           // Increment next from value
+          value += 1;
           if (fields[0].max && value >= fields[0].max) {
             value = fields[0].max; // Respect max limit
           }
