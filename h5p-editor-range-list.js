@@ -10,6 +10,10 @@ H5PEditor.RangeList = (function ($, TableList) {
   function RangeList(list) {
     var self = this;
 
+    // For fields setup with "showDefaultOnFirstRow": true, this will keep
+    // track of which fields default text have been added for.
+    var shownDefaultOnFirstRow = {};
+
     // Initialize inheritance
     TableList.call(self, list, 'h5p-editor-range-list');
 
@@ -21,6 +25,22 @@ H5PEditor.RangeList = (function ($, TableList) {
     });
 
     var distributeButton;
+
+    // Change the field definition before the widget is initialized. Makes it
+    // possible to override the default value. I.e remove it from all rows except
+    // the first.
+    self.on('beforewidgetcreate', function (event) {
+      var field = event.data.field;
+
+      if (field.showDefaultOnFirstRow) {
+        if (shownDefaultOnFirstRow[field.name]) {
+          delete field.default;
+        }
+        else {
+          shownDefaultOnFirstRow[field.name] = true;
+        }
+      }
+    });
 
     // Customize header
     self.once('headersadd', function (event) {
