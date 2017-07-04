@@ -68,6 +68,13 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       // Add textual representation of 'from' number input
       var fromInput = getFirst('input', row);
+
+      // Default value for newly added row set to blank when this
+      // is a row added by the user
+      if (row.previousElementSibling && initialized) {
+        setValue(fromInput, '');
+      }
+
       addInputText(fromInput);
 
       // Hide all errors from the 'from' input since they change automatically
@@ -91,8 +98,13 @@ H5PEditor.RangeList = (function ($, TableList) {
         if (toInput.value === '') {
           // No value set
           setValue(getFirst('input', row.nextElementSibling), '');
-          return;
         }
+
+        // We are acting on blur, while core's number widget is acting on
+        // change. Need to make sure change event is sent. Reason is we are
+        // initially setting this to '', but default value might be something
+        // else.
+        setValue(toInput, toInput.value);
 
         var value = parseInt(toInput.value);
         if (row.nextElementSibling && !isNaN(value)) {
@@ -120,6 +132,7 @@ H5PEditor.RangeList = (function ($, TableList) {
           // Since setting the value to empty will not validate (field is mandatory),
           // it will initially produce an error message. Removes this error-message here:
           prevToInput.parentNode.querySelector('.h5p-errors').innerHTML = '';
+          prevToInput.classList.remove('error');
         }
 
         // More than one row, enable buttons
@@ -249,18 +262,20 @@ H5PEditor.RangeList = (function ($, TableList) {
      * Identify overlapping ranges, and set a warning message if so
      */
     var validateSequence = function () {
-      var values = list.getValue();
       var higest = 0;
       var problemFound = false;
-      for (var i = 0; i < values.length; i++) {
-        if (values[i].to <= higest) {
+      var tbody = self.getBody();
+      for (var i = 0; i < tbody.children.length; i++) {
+        var to = parseInt(getSecond('input', tbody.children[i]).value);
+
+        if (!isNaN(to) && to <= higest) {
           problemFound = true;
           self.rows[i].classList.add('h5p-error-range-overlap');
         }
         else {
           self.rows[i].classList.remove('h5p-error-range-overlap');
         }
-        higest = values[i].to;
+        higest = to;
       }
       // Display a message
       self.messageArea.innerText = problemFound ? H5PEditor.t('H5PEditor.RangeList', 'rangeOutOfSequenceWarning') : '';
@@ -317,6 +332,8 @@ H5PEditor.RangeList = (function ($, TableList) {
           setValue(secondInput, Math.floor(from + rowRange));
           secondInput.dispatchEvent(new Event('keyup')); // Workaround to remove error messages
         }
+
+        validateSequence();
       };
     };
 
