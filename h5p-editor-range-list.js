@@ -10,10 +10,6 @@ H5PEditor.RangeList = (function ($, TableList) {
   function RangeList(list) {
     var self = this;
 
-    // For fields setup with "showDefaultOnFirstRow": true, this will keep
-    // track of which fields default text have been added for.
-    var shownDefaultOnFirstRow = {};
-
     // Initialize inheritance
     TableList.call(self, list, 'h5p-editor-range-list');
 
@@ -24,27 +20,15 @@ H5PEditor.RangeList = (function ($, TableList) {
       validateSequence();
     });
 
+    // Global elements
     var distributeButton;
+    var tbody;
 
-    // Change the field definition before the widget is initialized. Makes it
-    // possible to override the default value. I.e remove it from all rows except
-    // the first.
-    self.on('beforewidgetcreate', function (event) {
-      var field = event.data.field;
-
-      if (field.showDefaultOnFirstRow) {
-        if (shownDefaultOnFirstRow[field.name]) {
-          delete field.default;
-        }
-        else {
-          shownDefaultOnFirstRow[field.name] = true;
-        }
-      }
-    });
-
-    // Customize header
-    self.once('headersadd', function (event) {
-      var headRow = event.data.element;
+    // Customize table header and footer
+    self.once('tableprepared', function (event) {
+      var headRow = event.data.thead.firstElementChild;
+      var footCell = event.data.tfoot.firstElementChild.firstElementChild;
+      tbody = event.data.tbody;
       var fields = event.data.fields;
 
       // Add dash between 'from' and 'to' values
@@ -52,29 +36,23 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       // Mark score range label as required
       headRow.children[0].classList.add('h5peditor-required');
-    });
 
-    // Customize footer - add distribution button
-    self.once('footeradd', function (event) {
-      var footerCell = event.data.footerCell;
-      var fields = event.data.fields;
-      var tbody = event.data.tbody;
-
-      // Add button to evenly distribute ranges
+      // Create button to evenly distribute ranges
       distributeButton = createButtonWithConfirm(
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonLabel'),
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonWarning'),
         'h5peditor-range-distribute',
-        distributeEvenlyHandler(fields[0].min, fields[1].max, tbody)
+        distributeEvenlyHandler(fields[0].min, fields[1].max)
       );
 
-      footerCell.colSpan += 2;
-      footerCell.appendChild(distributeButton);
+      // Increase footer size and insert button
+      footCell.colSpan += 2;
+      footCell.appendChild(distributeButton);
 
-      // Create message area
+      // Create message area and insert before buttons
       self.messageArea = document.createElement('div');
       self.messageArea.className = 'h5p-editor-range-list-message-area';
-      footerCell.insertBefore(self.messageArea, footerCell.children[0]);
+      footCell.insertBefore(self.messageArea, footCell.firstElementChild);
     });
 
     // Customize rows as they're added
@@ -83,93 +61,45 @@ H5PEditor.RangeList = (function ($, TableList) {
       var fields = event.data.fields;
       var instances = event.data.instances;
 
-      // Customize each row by adding a separation dash
+      // Customize the 'from' input part
+      var fromInput = getFirst('input', row);
+      makeReadOnly(fromInput);
+
+      // Customize each row by adding a separation dash between 'from' and 'to'
       addDashCol(row, 'td', '–');
 
-      // Add textual representation of 'from' number input
-      var fromInput = getFirst('input', row);
-
-      // Default value for newly added row set to blank when this
-      // is a row added by the user
-      if (row.previousElementSibling && initialized) {
-        setValue(fromInput, '');
-      }
-
-      addInputText(fromInput);
-
-      // Hide all errors from the 'from' input since they change automatically
-      getFirst('.h5p-errors', row).style.display = 'none';
-
-      // Add textual representation of 'from' number input
+      // Customize the 'to' input part
       var toInput = getSecond('input', row);
+
+      // Create textual representation to display if this is the last row
       addInputText(toInput);
 
-      // Set min value of to field to equal from field value
-      instances[1].field.min = parseInt(fromInput.value);
+      // Set min value of 'to' field to equal the 'from' field value
+      linkPropertyValue('min', instances[1], fromInput);
 
-      // Update min value of to field when from field changes
-      fromInput.addEventListener('change', function () {
-        instances[1].field.min = parseInt(fromInput.value);
-        instances[1].validate();
-      });
+      // Update the next row's 'from' input when this row's 'to' input changes
+      toInput.addEventListener('change', updateInputHandler(fields[0]));
 
-      // Update next fromInput when this toInput changes
-      toInput.addEventListener('blur', function () {
-        if (toInput.value === '') {
-          // No value set
-          setValue(getFirst('input', row.nextElementSibling), '');
-        }
-
-        // We are acting on blur, while core's number widget is acting on
-        // change. Need to make sure change event is sent. Reason is we are
-        // initially setting this to '', but default value might be something
-        // else.
-        setValue(toInput, toInput.value);
-
-        var value = parseInt(toInput.value);
-        if (row.nextElementSibling && !isNaN(value)) {
-          // Increment next from value
-          value += 1;
-          if (fields[0].max && value >= fields[0].max) {
-            value = fields[0].max; // Respect max limit
-          }
-          setValue(getFirst('input', row.nextElementSibling), value);
-        }
-
-        validateSequence();
-      });
-
-      if (row.previousElementSibling) {
+      var isFirstRow = !row.previousElementSibling;
+      if (isFirstRow) {
+        // This is the first row, disable buttons
+        toggleButtons(false, row);
+      }
+      else {
         // Show the preivous field's second input when adding a new row
-        getSecond('.h5peditor-input-text', row.previousElementSibling).style.display = 'none';
-        var prevToInput = getSecond('input', row.previousElementSibling);
-        prevToInput.style.display = 'initial';
-
-        if (initialized) {
-          // User action, use no value
-          setValue(prevToInput, '');
-          // Hack:
-          // Since setting the value to empty will not validate (field is mandatory),
-          // it will initially produce an error message. Removes this error-message here:
-          prevToInput.parentNode.querySelector('.h5p-errors').innerHTML = '';
-          prevToInput.classList.remove('error');
-        }
+        makeEditable(row.previousElementSibling);
 
         // More than one row, enable buttons
         toggleButtons(true, row.previousElementSibling);
       }
-      else {
-        // This is the first row, disable buttons
-        toggleButtons(false, row);
-      }
 
       if (initialized) {
         validateSequence();
-      };
+      }
     });
 
     // Handle row being removed from the table
-    self.on('beforerowremove', function (event) {
+    self.on('rowremove', function (event) {
       var row = event.data.element;
       var fields = event.data.fields;
 
@@ -201,14 +131,114 @@ H5PEditor.RangeList = (function ($, TableList) {
       }
     });
 
-    // When row is removed - let's look for overlapping sequences
-    self.on('afterrowremove', function (event) {
+    // When row is removed we check for overlapping sequences
+    self.on('rowremoved', function (event) {
       validateSequence();
     });
 
     /**
+     * Convert the given input field into a read-only type field that is
+     * updated programmatically.
+     *
+     * @private
+     * @param {HTMLInputElement} input
+     */
+    var makeReadOnly = function (input) {
+      // Default value for newly added row is set to blank when this
+      // is a row added by the user
+      var isFirstRow = !input.parentElement.parentElement.parentElement.previousElementSibling;
+      if (!isFirstRow && initialized) {
+        setValue(input, '');
+      }
+
+      // Add textual representation of input
+      addInputText(input);
+
+      // Hide all errors since the input is updated programmatically
+      input.parentElement.querySelector('.h5p-errors').style.display = 'none';
+    };
+
+    /**
+     * The given row is no longer the last row and the 'to' input should
+     * now be editable.
+     *
+     * @private
+     * @param {HTMLTableRowElement} row
+     */
+    var makeEditable = function (row) {
+      getSecond('.h5peditor-input-text', row).style.display = 'none';
+      var prevToInput = getSecond('input', row);
+      prevToInput.style.display = 'initial';
+
+      if (initialized) {
+        // User action, use no value as default
+        setValue(prevToInput, '');
+
+        // Override / clear 'field is mandatory' error messages
+        prevToInput.parentNode.querySelector('.h5p-errors').innerHTML = '';
+        prevToInput.classList.remove('error');
+      }
+    };
+
+    /**
+     * Set the given field property to equal the value the given input field
+     *
+     * @private
+     * @param {string} property
+     * @param {Object} fieldInstance
+     * @param {HTMLInputElement} input
+     */
+    var linkPropertyValue = function (property, fieldInstance, input) {
+      // Update the current value to equal that of the input
+      fieldInstance.field[property] = parseInt(input.value);
+
+      // Update the value if the value of the field changes
+      input.addEventListener('change', function () {
+        fieldInstance.field[property] = parseInt(input.value);
+        fieldInstance.$input[0].dispatchEvent(new Event('change'));
+      });
+    };
+
+    /**
+     * Update the next row's 'from' input when this 'to' input change.
+     *
+     * @private
+     * @param {Object} field
+     * @return {function} Event handler
+     */
+    var updateInputHandler = function (field) {
+      return function () {
+        var nextRow = this.parentElement.parentElement.parentElement.nextElementSibling;
+        if (!nextRow) {
+          // This is the last row, nothing to update
+          return;
+        }
+
+        var targetInput = getFirst('input', nextRow);
+        if (this.value === '') {
+          // No value has been set
+          setValue(targetInput, '');
+          return;
+        }
+
+        var value = parseInt(this.value);
+        if (!isNaN(value)) {
+          // Increment next from value
+          value += 1;
+          if (field.max && value >= field.max) {
+            value = field.max; // Respect max limit
+          }
+          setValue(targetInput, value);
+        }
+
+        validateSequence();
+      };
+    };
+
+    /**
      * Add dash column to the given row.
      *
+     * @private
      * @param {HTMLTableRowElement} row
      * @param {string} type 'td' or 'th'
      * @param {string} [symbol] The 'text' to display
@@ -279,28 +309,30 @@ H5PEditor.RangeList = (function ($, TableList) {
     };
 
     /**
-     * Identify overlapping ranges, and set a warning message if so
+     * Identify any overlapping ranges and provide an error message.
+     *
+     * @private
      */
     var validateSequence = function () {
-      var higest = -1;
-      var problemFound = false;
-      var tbody = self.getBody();
+      var prevTo, error;
       for (var i = 0; i < tbody.children.length; i++) {
-        var to = parseInt(getSecond('input', tbody.children[i]).value);
+        var row = tbody.children[i];
+        var to = parseInt(getSecond('input', row).value);
 
-        if (!isNaN(to) && to <= higest) {
-          problemFound = true;
-          self.rows[i].classList.add('h5p-error-range-overlap');
+        if (prevTo !== undefined && !isNaN(to) && to <= prevTo) {
+          error = true;
+          row.classList.add('h5p-error-range-overlap');
         }
         else {
-          self.rows[i].classList.remove('h5p-error-range-overlap');
+          row.classList.remove('h5p-error-range-overlap');
         }
-        higest = to;
+        prevTo = to;
       }
+
       // Display a message
-      self.messageArea.innerText = problemFound ? H5PEditor.t('H5PEditor.RangeList', 'rangeOutOfSequenceWarning') : '';
-      self.messageArea.classList[problemFound ? 'add' : 'remove']('problem-found');
-    }
+      self.messageArea.innerText = error ? H5PEditor.t('H5PEditor.RangeList', 'rangeOutOfSequenceWarning') : '';
+      self.messageArea.classList[error ? 'add' : 'remove']('problem-found');
+    };
 
     /**
      * Create button which requires confirmation to be used.
@@ -335,10 +367,9 @@ H5PEditor.RangeList = (function ($, TableList) {
      * @private
      * @param {number} start The minimum value
      * @param {number} end The maximum value
-     * @param {HTMLTableSectionElement} tbody Table section containing the rows
      * @return {function} Event handler
      */
-    var distributeEvenlyHandler = function (start, end, tbody) {
+    var distributeEvenlyHandler = function (start, end) {
       return function () {
         // Distribute percentages evenly
         var rowRange = (end - start) / tbody.children.length;
@@ -348,7 +379,7 @@ H5PEditor.RangeList = (function ($, TableList) {
           var row = tbody.children[i];
           var from = start + (rowRange * i);
           setValue(getFirst('input', row), Math.floor(from) + (i === 0 ? 0 : 1));
-          secondInput = getSecond('input', row);
+          var secondInput = getSecond('input', row);
           setValue(secondInput, Math.floor(from + rowRange));
           secondInput.dispatchEvent(new Event('keyup')); // Workaround to remove error messages
         }
