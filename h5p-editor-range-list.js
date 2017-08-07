@@ -38,7 +38,7 @@ H5PEditor.RangeList = (function ($, TableList) {
       headRow.children[0].classList.add('h5peditor-required');
 
       // Create button to evenly distribute ranges
-      distributeButton = createButtonWithConfirm(
+      distributeButton = createDistributeButton(
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonLabel'),
         H5PEditor.t('H5PEditor.RangeList', 'distributeButtonWarning'),
         'h5peditor-range-distribute',
@@ -335,7 +335,7 @@ H5PEditor.RangeList = (function ($, TableList) {
     };
 
     /**
-     * Create button which requires confirmation to be used.
+     * Create distribute button
      *
      * @private
      * @param {string} label
@@ -344,21 +344,44 @@ H5PEditor.RangeList = (function ($, TableList) {
      * @param {function} action
      * @return {HTMLElement}
      */
-    var createButtonWithConfirm = function (label, warning, classname, action) {
+    var createDistributeButton = function (label, warning, classname, action) {
 
       // Create confirmation dialog
       var confirmDialog = new H5P.ConfirmationDialog({
         dialogText: warning
       }).appendTo(document.body);
+
       confirmDialog.on('confirmed', action);
 
       // Create and return button element
       return H5PEditor.createButton(classname, label, function () {
         if (this.getAttribute('aria-disabled') !== 'true') {
-          // The button has been clicked, activate confirmation dialog
-          confirmDialog.show(this.getBoundingClientRect().top);
+          // The button has been clicked, activate confirmation dialog if
+          // the author has defined any ranges
+          if (authorHasDefinedRanges()) {
+            confirmDialog.show(this.getBoundingClientRect().top);
+          }
+          else {
+            action();
+          }
         }
       }, true)[0];
+    };
+
+    /**
+     * Check if any input fields have gotten values by the author
+     *
+     * @private
+     * @return {boolean}
+     */
+    var authorHasDefinedRanges = function () {
+      for (var i = 0; i < tbody.children.length - 1; i++) {
+        var to = parseInt(getSecond('input', tbody.children[i]).value);
+        if (!isNaN(to)) {
+          return true;
+        }
+      }
+      return false;
     };
 
     /**

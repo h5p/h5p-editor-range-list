@@ -30,25 +30,25 @@
   line-height: 42px;
 
   color: #2579c6;
+  font-weight: bold;
   background: #fff;
-  border: 1px solid #2579c6;
+  border: 2px solid #2579c6;
 }
 .h5peditor-button-textual.h5peditor-range-distribute:hover {
   color: #1f67a8;
-  border: 1px solid #1f67a8;
+  border-color: #1f67a8;
   background: #fff;
 }
 .h5peditor-range-distribute[aria-disabled="true"],
 .h5peditor-button-textual.h5peditor-range-distribute[aria-disabled="true"]:hover {
   cursor: default;
   color: #8fb3d3;
-  border: 1px solid #8fb3d3;
+  border-color: #8fb3d3;
   background: #fff;
 }
 .h5p-editor-table-list tbody .h5p-error-range-overlap td {
   border-color: #da0001;
 }
-
 .h5p-editor-range-list-message-area {
   display: none;
   background: #f4ecec;
