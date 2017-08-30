@@ -194,11 +194,8 @@ H5PEditor.RangeList = (function ($, TableList) {
 
       // Update the value if the value of the field changes
       input.addEventListener('change', function () {
-        var event = document.createEvent('Event');
-        event.initEvent('change', true, true);
-
         fieldInstance.field[property] = parseInt(input.value);
-        fieldInstance.$input[0].dispatchEvent(event);
+        fieldInstance.$input[0].dispatchEvent(createNewEvent('change'));
       });
     };
 
@@ -307,11 +304,25 @@ H5PEditor.RangeList = (function ($, TableList) {
      * @param {string} value
      */
     var setValue = function (input, value) {
-      var event = document.createEvent('Event');
-      event.initEvent('change', true, true);
-
       input.value = value;
-      input.dispatchEvent(event);
+      input.dispatchEvent(createNewEvent('change'));
+    };
+
+    /**
+     * Create a new event, using a fallback for older browsers (IE11)
+     *
+     * @param {string} type
+     * @return {Event}
+     */
+    var createNewEvent = function (type) {
+      if (typeof Event !== 'function') {
+        var event = document.createEvent('Event');
+        event.initEvent(type, true, true);
+        return event;
+      }
+      else {
+        return new Event(type)
+      }
     };
 
     /**
@@ -410,10 +421,7 @@ H5PEditor.RangeList = (function ($, TableList) {
           setValue(getFirst('input', row), Math.floor(from) + (i === 0 ? 0 : 1));
           var secondInput = getSecond('input', row);
           setValue(secondInput, Math.floor(from + rowRange));
-
-          var event = document.createEvent('Event');
-          event.initEvent('keyup', true, true);
-          secondInput.dispatchEvent(event); // Workaround to remove error messages
+          secondInput.dispatchEvent(createNewEvent('keyup')); // Workaround to remove error messages
         }
 
         validateSequence();
