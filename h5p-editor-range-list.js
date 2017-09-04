@@ -168,7 +168,7 @@ H5PEditor.RangeList = (function ($, TableList) {
     var makeEditable = function (row) {
       getSecond('.h5peditor-input-text', row).style.display = 'none';
       var prevToInput = getSecond('input', row);
-      prevToInput.style.display = 'initial';
+      prevToInput.style.display = '';
 
       if (initialized) {
         // User action, use no value as default
