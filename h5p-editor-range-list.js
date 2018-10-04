@@ -476,12 +476,3 @@ H5PEditor.RangeList = (function ($, TableList) {
 
   return RangeList;
 })(H5P.jQuery, H5PEditor.TableList);
-
-// Add translations
-H5PEditor.language['H5PEditor.RangeList'] = {
-  'libraryStrings': {
-    'distributeButtonLabel': 'Distribute Evenly',
-    'distributeButtonWarning': 'Values will be changed for all of the ranges. Do you wish to proceed?',
-    'rangeOutOfSequenceWarning': 'The score ranges are out of sequence'
-  }
-};
