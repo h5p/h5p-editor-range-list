@@ -132,7 +132,7 @@ H5PEditor.RangeList = (function ($, TableList) {
     });
 
     // When row is removed we check for overlapping sequences
-    self.on('rowremoved', function (event) {
+    self.on('rowremoved', function () {
       validateSequence();
     });
 
@@ -321,7 +321,7 @@ H5PEditor.RangeList = (function ($, TableList) {
         return event;
       }
       else {
-        return new Event(type)
+        return new Event(type);
       }
     };
 
