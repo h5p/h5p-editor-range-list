@@ -132,7 +132,7 @@ H5PEditor.RangeList = (function ($, TableList) {
     });
 
     // When row is removed we check for overlapping sequences
-    self.on('rowremoved', function (event) {
+    self.on('rowremoved', function () {
       validateSequence();
     });
 
@@ -321,7 +321,7 @@ H5PEditor.RangeList = (function ($, TableList) {
         return event;
       }
       else {
-        return new Event(type)
+        return new Event(type);
       }
     };
 
@@ -476,12 +476,3 @@ H5PEditor.RangeList = (function ($, TableList) {
 
   return RangeList;
 })(H5P.jQuery, H5PEditor.TableList);
-
-// Add translations
-H5PEditor.language['H5PEditor.RangeList'] = {
-  'libraryStrings': {
-    'distributeButtonLabel': 'Distribute Evenly',
-    'distributeButtonWarning': 'Values will be changed for all of the ranges. Do you wish to proceed?',
-    'rangeOutOfSequenceWarning': 'The score ranges are out of sequence'
-  }
-};
