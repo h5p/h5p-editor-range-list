@@ -1,7 +1,0 @@
-{
-  "libraryStrings": {
-    "distributeButtonLabel": "Distribuir igualmente",
-    "distributeButtonWarning": "Os valores serão alterados para todos os intervalos. Deseja continuar?",
-    "rangeOutOfSequenceWarning": "Os intervalos de pontuação estão fora de sequência"
-  }
-}
