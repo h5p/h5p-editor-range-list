@@ -1,7 +1,7 @@
 {
   "libraryStrings": {
-    "distributeButtonLabel": "Distribuir Parejo",
-    "distributeButtonWarning": "Los valores serán cambiados para todos los rangos. ¿Desea proseguir?",
-    "rangeOutOfSequenceWarning": "Los rangos de puntaje están fuera de secuencia"
+    "distributeButtonLabel": "Distribuir Uniformemente",
+    "distributeButtonWarning": "Se cambiarán los valores para todos los rangos. ¿Quieres continuar?",
+    "rangeOutOfSequenceWarning": "Los rangos de puntuación están fuera de secuencia"
   }
 }
